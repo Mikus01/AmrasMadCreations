@@ -1,0 +1,149 @@
+<section class="amras-faction-form">
+  {{#if hasFaction}}
+  <header class="amras-faction-header">
+    <div class="amras-logo">
+      <img src="{{faction.img}}" alt="{{faction.name}}"
+        {{#if editable}}data-action="pickImage" data-tooltip="amras-mad-inventions.faction.pickLogo"{{/if}}>
+    </div>
+    {{#if editable}}
+    <input type="text" data-field="name" value="{{faction.name}}" placeholder="{{localize 'amras-mad-inventions.faction.name'}}">
+    {{else}}
+    <h2>{{faction.name}}</h2>
+    {{/if}}
+    {{#if inManager}}
+    <button type="button" data-action="openSheet" data-tooltip="amras-mad-inventions.manager.openSheet"><i class="fa-solid fa-up-right-from-square"></i></button>
+    {{#if editable}}<button type="button" data-action="deleteFaction" data-tooltip="amras-mad-inventions.manager.delete"><i class="fa-solid fa-trash"></i></button>{{/if}}
+    {{/if}}
+  </header>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.faction.description"}}</legend>
+    {{#if editable}}
+    <textarea data-field="description" rows="4">{{faction.description}}</textarea>
+    {{else}}
+    <p class="amras-description">{{faction.description}}</p>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.faction.quests"}}</legend>
+    <ul class="amras-faction-quests">
+      {{#each factionQuests}}
+      <li><button type="button" data-action="openFactionQuest" data-uuid="{{uuid}}">{{title}}</button></li>
+      {{else}}
+      <li class="amras-empty">{{localize "amras-mad-inventions.faction.noQuests"}}</li>
+      {{/each}}
+    </ul>
+    {{#if canCreateQuest}}
+    <button type="button" data-action="createFactionQuest"><i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.quest.manager.create"}}</button>
+    {{/if}}
+  </fieldset>
+
+  <fieldset class="amras-organization">
+    <legend>{{localize "amras-mad-inventions.faction.organization"}}</legend>
+    <div class="amras-org-roles">
+      {{#each faction.roles}}
+      <section class="amras-org-role" data-org-role data-role-id="{{id}}" data-role-index="{{index}}">
+        <header class="amras-org-role-header">
+          {{#if ../editable}}
+          <span class="amras-role-drag" data-role-drag draggable="true" data-tooltip="amras-mad-inventions.faction.dragRole"><i class="fa-solid fa-grip-vertical"></i></span>
+          <input type="text" data-role-edit data-role-id="{{id}}" value="{{name}}" aria-label="{{localize 'amras-mad-inventions.faction.roleName'}}">
+          <button type="button" data-action="deleteRole" data-role-id="{{id}}" data-tooltip="amras-mad-inventions.faction.deleteRole"><i class="fa-solid fa-trash"></i></button>
+          {{else}}
+          <h3>{{name}}</h3>
+          {{/if}}
+        </header>
+        <ul class="amras-org-members">
+          {{#each members}}
+          <li data-org-member data-actor-uuid="{{uuid}}" {{#if ../../editable}}draggable="true"{{/if}}>
+            <img src="{{img}}" alt="">
+            <span class="amras-name">{{name}}</span>
+            {{#if ../../editable}}<button type="button" data-action="removeOrganizationMember" data-actor-uuid="{{uuid}}" data-tooltip="amras-mad-inventions.faction.removeOrganizationMember"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+          </li>
+          {{else}}
+          <li class="amras-empty">{{localize "amras-mad-inventions.faction.noOrganizationMembers"}}</li>
+          {{/each}}
+        </ul>
+        {{#if ../editable}}
+        <div class="amras-dropzone amras-org-drop">{{localize "amras-mad-inventions.faction.dropOrganizationMember"}}</div>
+        {{/if}}
+      </section>
+      {{else}}
+      <p class="amras-empty">{{localize "amras-mad-inventions.faction.noRoles"}}</p>
+      {{/each}}
+    </div>
+    {{#if editable}}
+    <div class="amras-add-role">
+      <input type="text" data-role-name placeholder="{{localize 'amras-mad-inventions.faction.roleName'}}">
+      <button type="button" data-action="addRole"><i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.faction.addRole"}}</button>
+    </div>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.faction.goals"}}</legend>
+    <ul class="amras-goals">
+      {{#each faction.goals}}
+      <li class="{{#if completed}}completed{{/if}}">
+        {{#if ../editable}}
+        <button type="button" data-action="toggleGoal" data-goal-id="{{id}}" data-tooltip="amras-mad-inventions.faction.toggleGoal"><i class="fa-regular {{#if completed}}fa-square-check{{else}}fa-square{{/if}}"></i></button>
+        {{else}}
+        <i class="fa-regular {{#if completed}}fa-square-check{{else}}fa-square{{/if}}"></i>
+        {{/if}}
+        <span class="amras-goal-text"><strong>{{title}}</strong>{{#if description}} &ndash; {{description}}{{/if}}</span>
+        {{#if ../editable}}<button type="button" data-action="removeGoal" data-goal-id="{{id}}"><i class="fa-solid fa-trash"></i></button>{{/if}}
+      </li>
+      {{else}}
+      <li class="amras-empty">{{localize "amras-mad-inventions.faction.noGoals"}}</li>
+      {{/each}}
+    </ul>
+    {{#if editable}}
+    <div class="amras-add-goal">
+      <input type="text" data-goal-title placeholder="{{localize 'amras-mad-inventions.faction.goalTitle'}}">
+      <input type="text" data-goal-description placeholder="{{localize 'amras-mad-inventions.faction.goalDescription'}}">
+      <button type="button" data-action="addGoal"><i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.faction.addGoal"}}</button>
+    </div>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.faction.members"}}</legend>
+    <ul class="amras-members">
+      {{#each faction.members}}
+      <li>
+        <img src="{{img}}" alt="">
+        <span class="amras-name">{{name}}</span>
+        <div class="amras-renown" data-actor-uuid="{{uuid}}">
+          {{#if ../editable}}
+          <input type="range" min="{{../renownMin}}" max="{{../renownMax}}" step="1" value="{{points}}">
+          <input type="number" min="{{../renownMin}}" max="{{../renownMax}}" step="1" value="{{points}}">
+          {{else}}
+          <span class="amras-points">{{points}}</span>
+          {{/if}}
+          <span class="amras-level level-{{levelKey}}">{{levelLabel}}</span>
+        </div>
+        {{#if ../editable}}<button type="button" data-action="removeMember" data-actor-uuid="{{uuid}}" data-tooltip="amras-mad-inventions.faction.removeMember"><i class="fa-solid fa-trash"></i></button>{{/if}}
+      </li>
+      {{else}}
+      <li class="amras-empty">{{localize "amras-mad-inventions.faction.noMembers"}}</li>
+      {{/each}}
+    </ul>
+    {{#if editable}}
+    <div class="amras-dropzone amras-member-drop" data-drop="member">{{localize "amras-mad-inventions.faction.dropMember"}}</div>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.faction.history"}}</legend>
+    <ul class="amras-history">
+      {{#each faction.history}}
+      <li><span class="amras-date">{{date}}</span> {{actor}}: {{from}} &rarr; {{to}}{{#if user}} <em>({{user}})</em>{{/if}}{{#if reason}} &ndash; {{reason}}{{/if}}</li>
+      {{else}}
+      <li class="amras-empty">{{localize "amras-mad-inventions.faction.noHistory"}}</li>
+      {{/each}}
+    </ul>
+  </fieldset>
+  {{else}}
+  <p class="amras-empty">{{localize "amras-mad-inventions.manager.selectPrompt"}}</p>
+  {{/if}}
+</section>

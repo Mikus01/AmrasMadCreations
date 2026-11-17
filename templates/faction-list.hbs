@@ -1,0 +1,15 @@
+<nav class="amras-faction-list">
+  {{#if editable}}
+  <button type="button" data-action="createFaction"><i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.manager.create"}}</button>
+  {{/if}}
+  <ul>
+    {{#each factions}}
+    <li class="{{#if selected}}active{{/if}}" data-action="selectFaction" data-uuid="{{uuid}}">
+      <img src="{{img}}" alt="">
+      <span>{{name}}</span>
+    </li>
+    {{else}}
+    <li class="amras-empty">{{localize "amras-mad-inventions.manager.empty"}}</li>
+    {{/each}}
+  </ul>
+</nav>

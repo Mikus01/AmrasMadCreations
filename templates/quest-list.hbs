@@ -1,0 +1,23 @@
+<section class="amras-quest-list-panel">
+  <header class="amras-quest-manager-header">
+    <h2>{{localize "amras-mad-inventions.quest.manager.title"}}</h2>
+    {{#if editable}}
+    <button type="button" data-action="createQuest">
+      <i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.quest.manager.create"}}
+    </button>
+    {{/if}}
+  </header>
+  <ul class="amras-quest-list">
+    {{#each quests}}
+    <li class="{{#if selected}}selected{{/if}}">
+      <button type="button" data-action="selectQuest" data-uuid="{{uuid}}">
+        <img src="{{icon}}" alt="">
+        <span>{{title}}</span>
+        <small>{{stateLabel}}</small>
+      </button>
+    </li>
+    {{else}}
+    <li class="amras-empty">{{localize "amras-mad-inventions.quest.manager.empty"}}</li>
+    {{/each}}
+  </ul>
+</section>

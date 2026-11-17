@@ -1,0 +1,308 @@
+<section class="amras-quest-form">
+  {{#if hasQuest}}
+  <header class="amras-quest-header">
+    {{#if editable}}
+    <div class="amras-quest-icon">
+      <img src="{{quest.icon}}" alt="">
+      <input type="text" name="icon" value="{{quest.icon}}" aria-label="{{localize 'amras-mad-inventions.quest.icon'}}">
+      <button type="button" data-action="pickQuestIcon" data-tooltip="amras-mad-inventions.quest.pickIcon">
+        <i class="fa-solid fa-image"></i>
+      </button>
+    </div>
+    <input type="text" name="title" value="{{quest.title}}" required
+      placeholder="{{localize 'amras-mad-inventions.quest.title'}}">
+    {{else}}
+    <img class="amras-quest-icon-readonly" src="{{quest.icon}}" alt="">
+    <h2>{{quest.title}}</h2>
+    {{/if}}
+    {{#if inManager}}
+      {{#unless creating}}
+      <button type="button" data-action="openSheet" data-tooltip="amras-mad-inventions.quest.manager.openSheet">
+        <i class="fa-solid fa-up-right-from-square"></i>
+      </button>
+      <button type="button" data-action="deleteQuest" data-tooltip="amras-mad-inventions.quest.manager.delete">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+      {{/unless}}
+    {{/if}}
+  </header>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.description"}}</legend>
+    {{#if editable}}
+    <textarea name="description" rows="4" required>{{quest.description}}</textarea>
+    {{else}}
+    <p>{{quest.description}}</p>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.state.label"}}</legend>
+    {{#if editable}}
+      {{#if creating}}
+      <span>{{localize "amras-mad-inventions.quest.states.offered"}}</span>
+      <input type="hidden" name="state" value="offered">
+      {{else}}
+      <select name="state">
+        {{#each quest.stateOptions}}
+        <option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+      {{/if}}
+    {{else}}
+    <span>{{quest.stateLabel}}</span>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.giver"}}</legend>
+    {{#if editable}}
+    <span>{{localize "amras-mad-inventions.quest.giverActor"}}</span>
+    <div class="amras-dropzone amras-quest-drop" data-quest-drop="giver">
+      <input type="hidden" name="giverActorUuid" value="{{quest.giver.actorUuid}}">
+      <span data-giver-name>{{#if quest.giver.actorUuid}}{{quest.giverActorName}}{{else}}{{localize "amras-mad-inventions.quest.dropActor"}}{{/if}}</span>
+      <button type="button" data-clear-giver {{#unless quest.giver.actorUuid}}hidden{{/unless}} aria-label="{{localize 'amras-mad-inventions.quest.clearActor'}}"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <label>{{localize "amras-mad-inventions.quest.giverFaction"}}
+      <select name="giverFactionUuid">
+        <option value="">{{localize "amras-mad-inventions.quest.none"}}</option>
+        {{#each factions}}
+        <option value="{{uuid}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+        {{/each}}
+      </select>
+    </label>
+    {{else}}
+    {{#if quest.giver.actorUuid}}
+    <button type="button" data-action="openDocument" data-uuid="{{quest.giver.actorUuid}}">{{quest.giverActorName}}</button>
+    {{/if}}
+    {{#if quest.giver.factionUuid}}
+    <button type="button" data-action="openDocument" data-uuid="{{quest.giver.factionUuid}}">{{quest.giverFactionName}}</button>
+    {{/if}}
+    {{/if}}
+  </fieldset>
+
+  <fieldset class="amras-quest-rewards">
+    <legend>{{localize "amras-mad-inventions.quest.rewards.title"}}</legend>
+    {{#if quest.rewardsLocked}}
+    <p class="amras-quest-locked">{{localize "amras-mad-inventions.quest.rewards.locked"}}</p>
+    {{/if}}
+    {{#if editable}}
+    <label>{{localize "amras-mad-inventions.quest.rewards.xp"}}
+      <input type="number" name="xp" min="0" step="1" value="{{quest.rewards.xp}}" {{#if quest.rewardsLocked}}disabled{{/if}}>
+    </label>
+    <div class="amras-quest-items">
+      <span class="amras-quest-label">{{localize "amras-mad-inventions.quest.rewards.items"}}</span>
+      <div data-item-rows>
+        {{#each quest.items}}
+        <div class="amras-quest-item-row" data-item-row>
+          <input type="hidden" name="itemUuid" value="{{itemUuid}}">
+          <span data-item-name>{{name}}</span>
+          <label>{{localize "amras-mad-inventions.quest.rewards.quantity"}}
+            <input type="number" name="itemQuantity" min="1" step="1" value="{{quantity}}" {{#if ../quest.rewardsLocked}}disabled{{/if}}>
+          </label>
+          {{#unless ../quest.rewardsLocked}}
+          <button type="button" data-action="removeItemRow"><i class="fa-solid fa-xmark"></i></button>
+          {{/unless}}
+        </div>
+        {{/each}}
+      </div>
+      {{#unless quest.rewardsLocked}}
+      <div class="amras-dropzone amras-quest-drop" data-quest-drop="item">{{localize "amras-mad-inventions.quest.dropItem"}}</div>
+      <template data-item-row-template>
+        <div class="amras-quest-item-row" data-item-row>
+          <input type="hidden" name="itemUuid"><span data-item-name></span>
+          <label>{{localize "amras-mad-inventions.quest.rewards.quantity"}}
+            <input type="number" name="itemQuantity" min="1" step="1" value="1">
+          </label>
+          <button type="button" data-action="removeItemRow" aria-label="{{localize 'amras-mad-inventions.quest.removeItem'}}"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </template>
+      {{/unless}}
+    </div>
+
+    <div class="amras-quest-currencies">
+      <span class="amras-quest-label">{{localize "amras-mad-inventions.quest.rewards.currency"}}</span>
+      <div data-currency-rows>
+        {{#each quest.currencyEntries}}
+        <div class="amras-quest-currency-row {{#if fixed}}amras-quest-coin{{/if}}" data-currency-row>
+          {{#if fixed}}
+          <input type="hidden" name="currencyKey" value="{{key}}">
+          <img src="{{icon}}" alt="" title="{{label}}">
+          <input type="number" name="currencyAmount" aria-label="{{label}}" min="0" step="1" value="{{amount}}" {{#if ../quest.rewardsLocked}}disabled{{/if}}>
+          {{else}}
+          <input type="text" name="currencyKey" value="{{key}}" placeholder="{{localize 'amras-mad-inventions.quest.rewards.currencyKey'}}" {{#if ../quest.rewardsLocked}}disabled{{/if}}>
+          <input type="number" name="currencyAmount" min="0" step="1" value="{{amount}}" {{#if ../quest.rewardsLocked}}disabled{{/if}}>
+          {{#unless ../quest.rewardsLocked}}
+          <button type="button" data-action="removeCurrencyRow"><i class="fa-solid fa-xmark"></i></button>
+          {{/unless}}
+          {{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{#unless quest.rewardsLocked}}
+      <template data-currency-row-template>
+        <div class="amras-quest-currency-row" data-currency-row>
+          <input type="text" name="currencyKey" placeholder="{{localize 'amras-mad-inventions.quest.rewards.currencyKey'}}">
+          <input type="number" name="currencyAmount" min="0" step="1">
+          <button type="button" data-action="removeCurrencyRow" aria-label="{{localize 'amras-mad-inventions.quest.removeCurrency'}}"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </template>
+      <button type="button" data-action="addCurrencyRow"><i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.quest.rewards.addCurrency"}}</button>
+      {{/unless}}
+    </div>
+    {{else}}
+    {{#if quest.rewards.xp}}<p>{{quest.rewards.xp}} {{localize "amras-mad-inventions.quest.rewards.xp"}}</p>{{/if}}
+    {{#each quest.items}}<p>{{quantity}} × {{name}}</p>{{/each}}
+    {{#each quest.currencyEntries}}<p>{{amount}} {{key}}</p>{{/each}}
+    {{#unless quest.rewards.xp}}
+      {{#unless quest.items}}
+        {{#unless quest.currencyEntries}}<p>{{localize "amras-mad-inventions.quest.rewards.empty"}}</p>{{/unless}}
+      {{/unless}}
+    {{/unless}}
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.consequence"}}</legend>
+    {{#if editable}}
+    <textarea name="consequence" rows="3">{{quest.consequence}}</textarea>
+    {{else}}
+    <p>{{#if quest.consequence}}{{quest.consequence}}{{else}}{{localize "amras-mad-inventions.quest.none"}}{{/if}}</p>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.observers"}}</legend>
+    {{#if editable}}
+    <span class="amras-quest-label">{{localize "amras-mad-inventions.quest.actorObservers"}}</span>
+    <ul class="amras-quest-observers" data-actor-observers>
+      {{#each quest.observers}}
+      {{#if isActor}}
+      <li data-observer-row data-actor-observer="{{uuid}}">
+        <input type="hidden" name="observer" value="{{value}}">
+        <span>{{name}}</span>
+        <button type="button" data-action="removeObserverRow" aria-label="{{localize 'amras-mad-inventions.quest.removeObserver'}}"><i class="fa-solid fa-xmark"></i></button>
+      </li>
+      {{/if}}
+      {{/each}}
+    </ul>
+    <div class="amras-dropzone amras-quest-drop" data-quest-drop="observer">{{localize "amras-mad-inventions.quest.dropActor"}}</div>
+    <template data-actor-observer-template>
+      <li data-observer-row>
+        <input type="hidden" name="observer"><span data-observer-name></span>
+        <button type="button" data-action="removeObserverRow" aria-label="{{localize 'amras-mad-inventions.quest.removeObserver'}}"><i class="fa-solid fa-xmark"></i></button>
+      </li>
+    </template>
+    <span class="amras-quest-label">{{localize "amras-mad-inventions.quest.factionObservers"}}</span>
+    <div data-observer-rows>
+      {{#each quest.observers}}
+      {{#if isFaction}}
+      <div data-observer-row>
+        <select name="observer">
+          {{#each options}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+          {{/each}}
+        </select>
+        <button type="button" data-action="removeObserverRow" aria-label="{{localize 'amras-mad-inventions.quest.removeObserver'}}"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      {{/if}}
+      {{/each}}
+    </div>
+    <template data-observer-row-template>
+      <div class="amras-quest-observer-row" data-observer-row>
+        <select name="observer">
+          <option value="">{{localize "amras-mad-inventions.quest.none"}}</option>
+          {{#each observerOptions}}<option value="{{value}}">{{label}}</option>{{/each}}
+        </select>
+        <button type="button" data-action="removeObserverRow"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </template>
+    <button type="button" data-action="addObserverRow"><i class="fa-solid fa-plus"></i> {{localize "amras-mad-inventions.quest.addObserver"}}</button>
+    {{else}}
+    <span class="amras-quest-label">{{localize "amras-mad-inventions.quest.actorObservers"}}</span>
+    <ul class="amras-quest-observers">
+      {{#each quest.observers}}
+      {{#if isActor}}
+      <li><button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{name}}</button></li>
+      {{/if}}
+      {{/each}}
+    </ul>
+    <span class="amras-quest-label">{{localize "amras-mad-inventions.quest.factionObservers"}}</span>
+    <ul class="amras-quest-observers">
+      {{#each quest.observers}}
+      {{#if isFaction}}
+      <li><button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{name}}</button></li>
+      {{/if}}
+      {{/each}}
+    </ul>
+    {{/if}}
+  </fieldset>
+
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.related"}}</legend>
+    {{#if editable}}
+    <div class="amras-related-picker" data-related-picker>
+      <label>{{localize "amras-mad-inventions.quest.relatedSearch"}}
+        <input type="search" data-related-search autocomplete="off" role="combobox"
+          aria-autocomplete="list" aria-expanded="false"
+          placeholder="{{localize 'amras-mad-inventions.quest.relatedSearchPlaceholder'}}">
+      </label>
+      <ul class="amras-related-results" data-related-results role="listbox" hidden></ul>
+      <ul class="amras-quest-related" data-related-selected>
+        {{#each relatedQuests}}
+        {{#if linked}}
+        <li data-related-selection>
+          <input type="hidden" name="relatedQuestIds" value="{{uuid}}">
+          <button type="button" class="amras-related-link" data-action="openRelatedQuest" data-uuid="{{uuid}}">{{displayTitle}}</button>
+          <button type="button" data-related-remove aria-label="{{localize 'amras-mad-inventions.quest.relatedRemove'}}"><i class="fa-solid fa-xmark"></i></button>
+        </li>
+        {{/if}}
+        {{/each}}
+      </ul>
+      <template data-related-candidates>
+        {{#each relatedQuests}}{{#unless missing}}<span data-related-candidate data-uuid="{{uuid}}" data-title="{{title}}"></span>{{/unless}}{{/each}}
+      </template>
+      <template data-related-row>
+        <li data-related-selection>
+          <input type="hidden" name="relatedQuestIds">
+          <button type="button" class="amras-related-link" data-action="openRelatedQuest" data-related-title></button>
+          <button type="button" data-related-remove aria-label="{{localize 'amras-mad-inventions.quest.relatedRemove'}}"><i class="fa-solid fa-xmark"></i></button>
+        </li>
+      </template>
+    </div>
+    {{else}}
+    <ul class="amras-quest-related">
+      {{#each relatedQuests}}
+      <li>
+        <button type="button" data-action="openRelatedQuest" data-uuid="{{uuid}}">{{title}}</button>
+      </li>
+      {{else}}
+      <li class="amras-empty">{{localize "amras-mad-inventions.quest.relatedNone"}}</li>
+      {{/each}}
+    </ul>
+    {{/if}}
+  </fieldset>
+
+  {{#if quest.hasAudit}}
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.rewards.audit"}}</legend>
+    <ul class="amras-quest-audit">
+      {{#each quest.auditRows}}
+      <li>{{typeLabel}} — {{statusLabel}}{{#if actorUuid}} — {{actorUuid}}{{/if}}{{#if recipientText}} — {{recipientText}}{{/if}}{{#if amount}} — {{amount}}{{/if}}{{#if itemUuid}} — {{itemUuid}} ({{quantity}}){{/if}}{{#if currencyText}} — {{currencyText}}{{/if}}{{#if error}}: {{error}}{{/if}}</li>
+      {{/each}}
+    </ul>
+  </fieldset>
+  {{/if}}
+  {{#if quest.hasRewardRemainder}}
+    <p>{{localize "amras-mad-inventions.quest.rewards.remainder"}}: {{quest.rewardRemainderText}}</p>
+  {{/if}}
+
+  {{#if editable}}
+  <footer>
+    <button type="button" data-action="saveQuest"><i class="fa-solid fa-floppy-disk"></i> {{localize "amras-mad-inventions.quest.save"}}</button>
+  </footer>
+  {{/if}}
+  {{else}}
+  <p class="amras-empty">{{#if inManager}}{{localize "amras-mad-inventions.quest.manager.selectPrompt"}}{{else}}{{localize "amras-mad-inventions.quest.unavailable"}}{{/if}}</p>
+  {{/if}}
+</section>

@@ -1,0 +1,308 @@
+@layer amras-mad-inventions {
+  /* Module styles; all selectors scoped to module classes */
+  .amras-open-factions,
+  .amras-open-quests {
+    flex: 0 0 auto;
+  }
+
+  .amras-mad-inventions.amras-faction-manager .window-content {
+    flex-direction: row;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .amras-mad-inventions .amras-faction-list {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+  }
+
+  .amras-mad-inventions .amras-faction-list ul,
+  .amras-mad-inventions .amras-faction-form ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .amras-mad-inventions .amras-faction-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .amras-mad-inventions .amras-faction-list li.active,
+  .amras-mad-inventions .amras-faction-list li:hover {
+    background: rgb(0 0 0 / 15%);
+  }
+
+  .amras-mad-inventions .amras-faction-list img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border: none;
+  }
+
+  .amras-mad-inventions .amras-faction-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+    padding: 0.25rem;
+  }
+
+  .amras-mad-inventions .amras-faction-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .amras-mad-inventions .amras-faction-header input[type="text"],
+  .amras-mad-inventions .amras-faction-header h2 {
+    flex: 1;
+    margin: 0;
+  }
+
+  .amras-mad-inventions .amras-logo img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    border: none;
+  }
+
+  .amras-mad-inventions .amras-logo img[data-action] {
+    cursor: pointer;
+  }
+
+  .amras-mad-inventions .amras-faction-form textarea {
+    width: 100%;
+    resize: vertical;
+  }
+
+  .amras-mad-inventions .amras-leader,
+  .amras-mad-inventions .amras-members li,
+  .amras-mad-inventions .amras-goals li,
+  .amras-mad-inventions .amras-add-goal {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .amras-mad-inventions .amras-leader img,
+  .amras-mad-inventions .amras-members img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border: none;
+  }
+
+  .amras-mad-inventions .amras-name,
+  .amras-mad-inventions .amras-goal-text {
+    flex: 1;
+  }
+
+  .amras-mad-inventions .amras-goals li.completed .amras-goal-text {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .amras-mad-inventions .amras-renown {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-renown input[type="number"] {
+    width: 4.5rem;
+  }
+
+  .amras-mad-inventions .amras-level {
+    min-width: 5rem;
+    font-weight: bold;
+  }
+
+  .amras-mad-inventions .amras-level.level-infamous,
+  .amras-mad-inventions .amras-level.level-hated,
+  .amras-mad-inventions .amras-level.level-disliked { color: #a03030; }
+  .amras-mad-inventions .amras-level.level-liked,
+  .amras-mad-inventions .amras-level.level-respected,
+  .amras-mad-inventions .amras-level.level-revered,
+  .amras-mad-inventions .amras-level.level-paragon { color: #2e7d32; }
+
+  .amras-mad-inventions .amras-dropzone {
+    border: 1px dashed var(--color-border-light-tertiary, #888);
+    border-radius: 4px;
+    padding: 0.4rem;
+    text-align: center;
+  }
+
+  .amras-mad-inventions .amras-dropzone.drag-over {
+    background: rgb(0 0 0 / 15%);
+  }
+
+  .amras-mad-inventions .amras-org-roles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-org-role {
+    border: 1px solid var(--color-border-light-tertiary, #888);
+    padding: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-org-role-header,
+  .amras-mad-inventions .amras-org-members li,
+  .amras-mad-inventions .amras-add-role {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-org-members img {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border: 0;
+  }
+
+  .amras-mad-inventions .amras-role-drag {
+    cursor: grab;
+  }
+
+  .amras-mad-inventions.amras-quest-manager .window-content {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .amras-mad-inventions .amras-quest-list-panel {
+    flex: 0 0 220px;
+    overflow-y: auto;
+  }
+
+  .amras-mad-inventions .amras-quest-form {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+  }
+
+  .amras-mad-inventions .amras-quest-form fieldset {
+    margin-bottom: 0.5rem;
+  }
+
+  .amras-mad-inventions .amras-quest-form textarea {
+    width: 100%;
+  }
+
+  .amras-mad-inventions .amras-quest-form input[name="xp"] {
+    max-width: 8rem;
+  }
+
+  .amras-mad-inventions .amras-quest-label {
+    display: block;
+    font-weight: bold;
+    margin-top: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-quest-drop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions [data-currency-rows] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .amras-mad-inventions .amras-quest-coin {
+    flex: 1 1 5rem;
+    min-width: 5rem;
+  }
+
+  .amras-mad-inventions .amras-quest-coin img {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 0;
+  }
+
+  .amras-mad-inventions .amras-quest-header,
+  .amras-mad-inventions .amras-quest-item-row,
+  .amras-mad-inventions .amras-quest-currency-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-quest-icon img,
+  .amras-mad-inventions .amras-quest-icon-readonly {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+
+  .amras-mad-inventions .amras-quest-list,
+  .amras-mad-inventions .amras-quest-form ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .amras-mad-inventions .amras-related-results {
+    max-height: 12rem;
+    overflow-y: auto;
+    border: 1px solid var(--color-border-light-tertiary, #888);
+  }
+
+  .amras-mad-inventions .amras-related-results button {
+    width: 100%;
+    text-align: left;
+  }
+
+  .amras-mad-inventions [data-related-selection] {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions [data-related-selection] .amras-related-link {
+    flex: 1;
+    text-align: left;
+  }
+
+  .amras-mad-inventions .amras-quest-list button {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .amras-mad-inventions .amras-quest-list img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+
+  .amras-mad-inventions .amras-empty {
+    opacity: 0.6;
+    font-style: italic;
+  }
+
+  .amras-mad-inventions .amras-history {
+    max-height: 10rem;
+    overflow-y: auto;
+    font-size: var(--font-size-12, 12px);
+  }
+
+  .amras-mad-inventions .amras-date {
+    opacity: 0.7;
+  }
+}

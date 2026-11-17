@@ -1,0 +1,32 @@
+{
+  "id": "amras-mad-inventions",
+  "title": "Amras Mad Inventions",
+  "description": "A collection of mad inventions for Foundry VTT.",
+  "version": "0.2.3",
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "Mikus01"
+    }
+  ],
+  "esmodules": ["scripts/main.mjs"],
+  "styles": ["styles/module.css"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "documentTypes": {
+    "JournalEntryPage": {
+      "faction": {},
+      "quest": {}
+    }
+  },
+  "relationships": {},
+  "flags": {}
+}
