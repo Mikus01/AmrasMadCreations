@@ -28,5 +28,7 @@
     }
   },
   "relationships": {},
-  "flags": {}
+  "flags": {},
+  "manifest": "https://raw.githubusercontent.com/Mikus01/AmrasMadCreations/refs/heads/master/module.json",
+  "download": "https://raw.githubusercontent.com/Mikus01/AmrasMadCreations/refs/heads/master/bin/amras-mad-inventions.zip"
 }
