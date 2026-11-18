@@ -11,7 +11,7 @@ beforeAll(async () => {
     } },
     data: { fields: {} },
     abstract: { TypeDataModel: Base },
-    utils: { deepClone: structuredClone }
+    utils: { deepClone: structuredClone, escapeHTML: value => value }
   });
   ({ buildQuestContext, pageToQuest, questFromForm, saveQuestPage, QuestPageSheet, openRelatedQuest } = await import("../scripts/quest-sheet.mjs"));
   ({ QuestManager, openQuestPage, buildFactionQuestSection, cleanupQuestRelations } = await import("../scripts/quest-manager.mjs"));
@@ -147,6 +147,191 @@ describe("quest UI integration", () => {
     expect(openQuestPage(related.uuid)).toBe(true);
     expect(related.sheet.render).toHaveBeenCalledWith({ force: true });
     expect(openQuestPage("missing")).toBe(false);
+  });
+
+  it("REQ-048 preserves accepted Actor UUIDs in quest forms and defaults legacy pages to an empty list", () => {
+    game.user.isGM = true;
+    const values = {
+      title: "Quest", description: "Description", icon: "", giverActorUuid: "Actor.giver",
+      giverFactionUuid: "", state: "offered", xp: "0", consequence: ""
+    };
+    const root = {
+      querySelector: selector => {
+        const key = selector.match(/name='([^']+)'/)?.[1];
+        return key in values ? { value: values[key] } : null;
+      },
+      querySelectorAll: selector => selector === "[name='acceptedActorUuids']"
+        ? [{ value: "Actor.first" }, { value: "Actor.second" }] : []
+    };
+    const legacy = page("quest-a");
+    expect(pageToQuest(legacy).acceptedActorUuids).toEqual([]);
+    expect(questFromForm(root).acceptedActorUuids).toEqual(["Actor.first", "Actor.second"]);
+    legacy.system.acceptedActorUuids = ["Actor.first", "Actor.missing"];
+    expect(pageToQuest(legacy).acceptedActorUuids).toEqual(["Actor.first", "Actor.missing"]);
+  });
+
+  it("REQ-049 rejects participant changes while the saved state is completed, even when reopening", async () => {
+    game.user.isGM = true;
+    vi.stubGlobal("ui", { notifications: { warn: vi.fn() } });
+    vi.stubGlobal("CONST", { DOCUMENT_OWNERSHIP_LEVELS: { OBSERVER: 2, OWNER: 3 } });
+    game.users = { contents: [] };
+    const completed = page("quest-completed");
+    completed.system.state = "completed";
+    completed.system.acceptedActorUuids = ["Actor.first"];
+    completed.update = vi.fn();
+    completed.parent = {
+      name: completed.name, ownership: { default: 0 },
+      pages: { size: 1, contents: [completed] },
+      getFlag: () => ({ users: [], original: {} }),
+      update: vi.fn()
+    };
+    game.journal.contents = [completed.parent];
+    const changed = {
+      ...pageToQuest(completed),
+      state: "in-progress",
+      acceptedActorUuids: ["Actor.second"]
+    };
+    expect(await saveQuestPage(completed, changed)).toBe(false);
+    expect(completed.update).not.toHaveBeenCalled();
+    expect(ui.notifications.warn).toHaveBeenCalled();
+  });
+
+  it("REQ-048/049 preserves participants until the reopened state is saved", async () => {
+    game.user.isGM = true;
+    game.users = { contents: [] };
+    vi.stubGlobal("CONST", { DOCUMENT_OWNERSHIP_LEVELS: { OBSERVER: 2, OWNER: 3 } });
+    vi.stubGlobal("ui", { notifications: { warn: vi.fn() } });
+    const current = page("quest-a");
+    current.system.state = "completed";
+    current.system.acceptedActorUuids = ["Actor.first"];
+    current.parent = {
+      name: current.name, ownership: { default: 0 },
+      pages: { size: 1, contents: [current] },
+      getFlag: () => ({ users: [], original: {} }),
+      update: vi.fn()
+    };
+    current.update = vi.fn(async changes => {
+      for (const [path, value] of Object.entries(changes)) {
+        if (path === "name") current.name = value;
+        else if (path.startsWith("system.")) {
+          const parts = path.split(".").slice(1);
+          let target = current.system;
+          while (parts.length > 1) target = target[parts.shift()];
+          target[parts[0]] = structuredClone(value);
+        }
+      }
+    });
+    game.journal.contents = [current.parent];
+    expect(buildQuestContext(current, { relatedPages: [] }).acceptedEditable).toBe(false);
+    const reopened = { ...pageToQuest(current), state: "in-progress" };
+    expect(await saveQuestPage(current, reopened)).toBe(true);
+    expect(current.system.acceptedActorUuids).toEqual(["Actor.first"]);
+    expect(buildQuestContext(current, { relatedPages: [] }).acceptedEditable).toBe(true);
+    const updated = { ...pageToQuest(current), acceptedActorUuids: ["Actor.second"] };
+    expect(await saveQuestPage(current, updated)).toBe(true);
+    expect(pageToQuest(current).acceptedActorUuids).toEqual(["Actor.second"]);
+    game.user.isGM = false;
+    const player = buildQuestContext(current, { relatedPages: [] });
+    expect(player.acceptedEditable).toBe(false);
+    expect(player.quest.acceptedActors).toEqual([{ uuid: "Actor.second", name: "Actor.second" }]);
+  });
+
+  it("REQ-051 saves participants on confirmed completion", async () => {
+    game.user.isGM = true;
+    game.users = { contents: [] };
+    game.system = { id: "unsupported" };
+    game.i18n.format = key => key;
+    vi.stubGlobal("CONST", { DOCUMENT_OWNERSHIP_LEVELS: { OBSERVER: 2, OWNER: 3 } });
+    vi.stubGlobal("ui", { notifications: { warn: vi.fn(), error: vi.fn() } });
+    foundry.applications.api.DialogV2.prompt = vi.fn().mockResolvedValue({ xp: [], items: [], currency: [] });
+    const current = page("quest-a");
+    current.system.acceptedActorUuids = [];
+    current.parent = {
+      name: current.name, ownership: { default: 0 },
+      pages: { size: 1, contents: [current] },
+      getFlag: () => ({ users: [], original: {} }),
+      update: vi.fn()
+    };
+    current.update = vi.fn(async changes => {
+      for (const [path, value] of Object.entries(changes)) {
+        if (path === "name") current.name = value;
+        else if (path.startsWith("system.")) {
+          const parts = path.split(".").slice(1);
+          let target = current.system;
+          while (parts.length > 1) target = target[parts.shift()];
+          target[parts[0]] = structuredClone(value);
+        }
+      }
+    });
+    game.journal.contents = [current.parent];
+    const changed = { ...pageToQuest(current), state: "completed", acceptedActorUuids: ["Actor.a"] };
+    expect(await saveQuestPage(current, changed)).toBe(true);
+    expect(current.system.state).toBe("completed");
+    expect(current.system.acceptedActorUuids).toEqual(["Actor.a"]);
+  });
+
+  it("REQ-051 discards form edits after completion is cancelled in either quest form", async () => {
+    game.user.isGM = true;
+    game.i18n.format = key => key;
+    foundry.applications.api.DialogV2.prompt = vi.fn().mockResolvedValue(null);
+    const current = page("quest-a");
+    current.system.giver.actorUuid = "Actor.giver";
+    current.system.acceptedActorUuids = [];
+    current.update = vi.fn();
+    const values = {
+      title: "Unsaved", description: "Description", icon: "", giverActorUuid: "Actor.giver",
+      giverFactionUuid: "", state: "completed", xp: "0", consequence: ""
+    };
+    const root = {
+      querySelector: selector => {
+        const key = selector.match(/name='([^']+)'/)?.[1];
+        return key in values ? { value: values[key] } : null;
+      },
+      querySelectorAll: selector => selector === "[name='acceptedActorUuids']"
+        ? [{ value: "Actor.a" }] : []
+    };
+    for (const [action, app] of [
+      [QuestManager.DEFAULT_OPTIONS.actions.saveQuest, { questPage: current, element: root, render: vi.fn() }],
+      [QuestPageSheet.DEFAULT_OPTIONS.actions.saveQuest, { document: current, element: root, render: vi.fn() }]
+    ]) {
+      await action.call(app);
+      expect(app.render).toHaveBeenCalledOnce();
+    }
+    expect(current.update).not.toHaveBeenCalled();
+  });
+
+  it("REQ-052 preselects accepted Actors for XP and currency but not item quantities", async () => {
+    game.user.isGM = true;
+    game.actors.contents = [
+      { uuid: "Actor.accepted", name: "Accepted" },
+      { uuid: "Actor.other", name: "Other" }
+    ];
+    game.i18n.format = key => key;
+    vi.stubGlobal("fromUuidSync", () => null);
+    const prompt = vi.fn().mockResolvedValue(null);
+    foundry.applications.api.DialogV2.prompt = prompt;
+    const offered = page("quest-a");
+    offered.system.acceptedActorUuids = ["Actor.accepted"];
+    offered.system.rewards = {
+      xp: 10, currency: { gp: 5 }, items: [{ itemUuid: "Item.reward", quantity: 2 }]
+    };
+    offered.update = vi.fn();
+    const changed = { ...pageToQuest(offered), state: "completed" };
+    expect(await saveQuestPage(offered, changed)).toBe(false);
+    const html = prompt.mock.calls[0][0].content;
+    const inputs = [...html.matchAll(/<input\b[^>]*>/g)].map(match => match[0]);
+    for (const group of ["xp", "currency"]) {
+      const accepted = inputs.find(input => input.includes(`data-assignment-group="${group}"`)
+        && input.includes('data-actor-uuid="Actor.accepted"'));
+      const other = inputs.find(input => input.includes(`data-assignment-group="${group}"`)
+        && input.includes('data-actor-uuid="Actor.other"'));
+      expect(accepted).toMatch(/\bchecked(?:\s|=|>)/);
+      expect(other).not.toMatch(/\bchecked(?:\s|=|>)/);
+    }
+    const items = inputs.filter(input => input.includes("data-item-index="));
+    expect(items).toHaveLength(2);
+    for (const item of items) expect(item).toContain('value="0"');
+    expect(offered.update).not.toHaveBeenCalled();
   });
 
   it("REQ-043 notifies when a related quest is unavailable or inaccessible", () => {

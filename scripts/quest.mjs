@@ -30,6 +30,7 @@ export function createQuest({
     consequence,
     state: "offered",
     observers: [],
+    acceptedActorUuids: [],
     relatedQuestIds: [],
     rewardAudit: [],
     rewardsGranted: false

@@ -55,6 +55,7 @@ export function pageToQuest(page) {
     rewards: foundry.utils.deepClone(system.rewards),
     consequence: system.consequence,
     observers: system.observers.map(o => ({ type: o.type, uuid: o.uuid })),
+    acceptedActorUuids: [...(system.acceptedActorUuids ?? [])],
     relatedQuestIds: [...system.relatedQuestIds],
     rewardAudit: foundry.utils.deepClone(system.rewardAudit),
     rewardsGranted: system.rewardsGranted,
@@ -118,8 +119,17 @@ function currentForm(root) {
     rewards: { xp, items, currency },
     consequence: read("[name='consequence']"),
     observers,
+    acceptedActorUuids: [...root.querySelectorAll("[name='acceptedActorUuids']")].map(i => i.value),
     relatedQuestIds: [...root.querySelectorAll("[name='relatedQuestIds']")].map(i => i.value)
   };
+}
+
+function validAcceptedActors(quest) {
+  const accepted = quest.acceptedActorUuids ?? [];
+  return Array.isArray(accepted) && accepted.every(uuid => typeof uuid === "string" && uuid.trim()
+    && uuid !== quest.giver.actorUuid
+    && !quest.observers.some(observer => observer.type === "actor" && observer.uuid === uuid))
+    && new Set(accepted).size === accepted.length;
 }
 
 export function questFromForm(root, { page = null, defaults = {} } = {}) {
@@ -154,6 +164,10 @@ export function questFromForm(root, { page = null, defaults = {} } = {}) {
     for (const observer of input.observers) quest = addObserver(quest, observer, { isGM: true });
   } catch {
     throw new Error(t("quest.validation.observerConflict"));
+  }
+  quest.acceptedActorUuids = input.acceptedActorUuids;
+  if (!validAcceptedActors(quest)) {
+    throw new Error(t("quest.validation.acceptedConflict"));
   }
   quest = setQuestState(quest, existing ? input.state : "offered", { isGM: true });
 
@@ -191,6 +205,7 @@ function questUpdateData(q) {
     "system.rewards": q.rewards,
     "system.consequence": q.consequence ?? "",
     "system.observers": q.observers,
+    "system.acceptedActorUuids": q.acceptedActorUuids,
     "system.relatedQuestIds": q.relatedQuestIds,
     "system.rewardAudit": q.rewardAudit,
     "system.rewardsGranted": q.rewardsGranted,
@@ -231,8 +246,9 @@ async function syncRelations(page, relatedQuestIds) {
 
 function assignmentDialog(q) {
   const actors = game.actors.contents;
+  const accepted = new Set(q.acceptedActorUuids ?? []);
   const actorChoices = group => actors.map(actor => `<label class="amras-quest-recipient">
-    <input type="checkbox" data-assignment-group="${group}" data-actor-uuid="${esc(actor.uuid)}"> ${esc(actor.name)}</label>`).join("");
+    <input type="checkbox" data-assignment-group="${group}" data-actor-uuid="${esc(actor.uuid)}"${accepted.has(actor.uuid) ? " checked" : ""}> ${esc(actor.name)}</label>`).join("");
   const itemRows = (q.rewards.items ?? []).map((item, index) => {
     const document = resolve(item.itemUuid);
     const name = document?.name ?? item.itemUuid;
@@ -340,16 +356,28 @@ async function completeWithAssignments(page, quest) {
   }
 }
 
-export async function saveQuestPage(page, quest) {
+export async function saveQuestPage(page, quest, { onCompletionCancelled } = {}) {
   if (!isGM() || !isQuestPage(page)) return false;
   const current = pageToQuest(page);
+  if (current.state === "completed"
+    && JSON.stringify(current.acceptedActorUuids) !== JSON.stringify(quest.acceptedActorUuids ?? [])) {
+    ui.notifications.warn(t("quest.acceptedLocked"));
+    return false;
+  }
+  if (!validAcceptedActors(quest)) {
+    ui.notifications.warn(t("quest.validation.acceptedConflict"));
+    return false;
+  }
   if (current.rewardsLocked && JSON.stringify(current.rewards) !== JSON.stringify(quest.rewards)) {
     ui.notifications.warn(t("quest.rewards.locked"));
     return false;
   }
   if (quest.state === "completed" && current.state !== "completed" && !current.rewardsGranted) {
     const result = await completeWithAssignments(page, quest);
-    if (!result.confirmed) return false;
+    if (!result.confirmed) {
+      onCompletionCancelled?.();
+      return false;
+    }
     if (!result.success) return false;
   } else {
     await updateQuestDefinition(page, quest);
@@ -441,7 +469,9 @@ export class QuestPageSheet extends HandlebarsApplicationMixin(JournalEntryPageS
     if (!isGM()) return;
     try {
       const quest = questFromForm(this.element, { page: this.document });
-      if (await saveQuestPage(this.document, quest)) await this.render();
+      let cancelled = false;
+      if (await saveQuestPage(this.document, quest, { onCompletionCancelled: () => { cancelled = true; } })
+        || cancelled) await this.render();
     } catch (error) {
       console.error(`${MODULE_ID} | Quest save failed`, error);
       ui.notifications.warn(t("notifications.questInvalid"));
@@ -502,12 +532,14 @@ export function buildQuestContext(page, { defaults = {}, relatedPages = allQuest
       rewards: { xp: 0, items: [], currency: {} },
       consequence: "",
       observers: defaults.observers ?? [],
+      acceptedActorUuids: [],
       relatedQuestIds: []
     };
     const factions = game.journal.contents.flatMap(j => j.pages.contents)
       .filter(p => p.type === `${MODULE_ID}.faction`);
     return {
       editable,
+      acceptedEditable: editable,
       hasQuest: creating,
       quest: {
         ...initial,
@@ -584,6 +616,7 @@ export function buildQuestContext(page, { defaults = {}, relatedPages = allQuest
   }
   return {
     editable,
+    acceptedEditable: editable && q.state !== "completed",
     hasQuest: true,
     quest: {
       ...q,
@@ -592,6 +625,7 @@ export function buildQuestContext(page, { defaults = {}, relatedPages = allQuest
       giverActorName: resolve(q.giver.actorUuid)?.name ?? "",
       giverFactionName: resolve(q.giver.factionUuid)?.name ?? "",
       observers: observerRows,
+      acceptedActors: q.acceptedActorUuids.map(uuid => ({ uuid, name: resolve(uuid)?.name ?? uuid })),
       items,
       currencyEntries: currencies,
       audit: q.rewardAudit.slice().reverse(),

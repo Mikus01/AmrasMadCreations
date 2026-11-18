@@ -2,7 +2,7 @@
   "id": "amras-mad-inventions",
   "title": "Amras Mad Inventions",
   "description": "A collection of mad inventions for Foundry VTT.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "compatibility": {
     "minimum": "14",
     "verified": "14"

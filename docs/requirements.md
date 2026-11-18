@@ -121,6 +121,32 @@ shared world without confirming the affected documents and protecting data.
 | REQ-046 | `tests/journal-organization.test.mjs`: mixed-journal split, reference remapping, and retry after failure | Split a mixed journal containing both kinds and an ordinary page; verify all quest links and permissions, external-link warning, ordinary-page retention, and empty-original deletion. Inject a failure and retry; confirm originals and references are not lost or duplicated. |
 | REQ-047 | Gap: sidebar-opening dispatch and permissions | Open each journal from the sidebar as GM and authorized player; verify saved content and edit restrictions. Check mixed and ordinary journals remain usable and no reader error occurs. |
 
+### Quest participants
+
+These requirements apply to both the Quest Manager and the quest page sheet.
+The list is separate from quest givers and observers and does not change the
+quest state automatically. The proposed unit-test contract uses
+`acceptedActorUuids` for the stored list and `accepted` for the Actor drop kind;
+these names may be adapted together with the tests during implementation.
+
+| ID | Requirement and rationale | Acceptance criteria |
+|---|---|---|
+| REQ-048 | Record who accepted a quest. | The "Quest accepted by" section lists any number of distinct Actors as horizontally wrapping entries. Each editable entry presents the Actor and remove actions as a joined control with a dividing line. A GM adds a resolvable Actor by dropping it, may remove each listed Actor, and duplicate drops leave one entry. A new or existing quest without participant data starts with an empty list. Saving and reopening preserves the list. An unavailable saved Actor remains listed by UUID until explicitly removed. |
+| REQ-049 | Restrict participant changes by saved quest state. | Only a GM can change the list. Players who can view the quest see it read-only. When the saved state is Completed, additions and removals are rejected, including attempts through stale forms or direct save calls. Selecting another state in an unsaved form does not unlock it; after a non-Completed state is saved, the list becomes editable again. A quest may have an empty list in any state. |
+| REQ-050 | Keep Actor assignments mutually exclusive. | An Actor cannot simultaneously be a giver or Actor observer and an accepted Actor. Dropping an Actor into one of these sections moves it from the other section, preserving existing required-giver validation. If the saved state is Completed, a move that would change the locked participant list is rejected and the GM is notified without changing either section. Invalid or unavailable drops do not change the form and notify the GM. |
+| REQ-051 | Include participants when completing a quest. | List changes made while the saved state is not Completed may be saved together with the transition to Completed. If the completion assignment dialog is cancelled, save nothing and discard all unsaved quest-form edits. Existing completion and reward auditing requirements remain in effect. |
+| REQ-052 | Suggest participants for rewards without constraining the GM. | The completion assignment dialog preselects accepted Actors who are available in the Actor choices for both XP and currency when those rewards apply. The GM may change recipients freely, including selecting other Actors. Item quantities remain zero until assigned manually; an empty accepted list selects nobody by default. |
+
+#### Participant test cases and traceability
+
+| Requirement | Automated test cases | Foundry integration or manual cases |
+|---|---|---|
+| REQ-048 | `tests/quest-integration.test.mjs`: participant serialization, legacy empty default | In both forms, drop several Actors, drop a duplicate, remove one, save and reopen; verify unavailable saved Actors remain visible by UUID. |
+| REQ-049 | `tests/quest-integration.test.mjs`: saved-state lock and reopening | Verify players see a read-only list. Test completed quests, stale forms, selecting another state without saving, and saving a non-completed state before editing. |
+| REQ-050 | `tests/quest-form-controls.test.mjs`: moves between participant, giver and observer sections, locked move rejection and invalid drops | Move an Actor between each pair of giver, Actor observers and accepted Actors; verify giver validation. Repeat with a saved Completed quest and verify locked moves and invalid drops notify without changes. |
+| REQ-051 | `tests/quest-integration.test.mjs`: confirmed completion persistence and cancellation in both forms | Modify participants and complete; verify confirmed changes persist. Repeat and cancel; verify nothing is saved and all unsaved form edits are discarded in both forms. |
+| REQ-052 | `tests/quest-integration.test.mjs`: completion recipient defaults | Verify XP and currency preselection, manual changes, zero item quantities and empty lists in the Foundry completion dialog. |
+
 ### Quest form test cases and traceability
 
 The following in-Foundry integration cases are required for both the manager and

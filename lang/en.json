@@ -57,6 +57,9 @@
       "dropActor": "Drop an Actor here",
       "dropItem": "Drop an Item here",
       "clearActor": "Clear Actor giver",
+      "acceptedBy": "Quest accepted by",
+      "removeAccepted": "Remove accepted Actor",
+      "acceptedLocked": "Accepted Actors cannot be changed while this quest is completed.",
       "removeItem": "Remove item",
       "removeObserver": "Remove observer",
       "removeCurrency": "Remove currency",
@@ -107,6 +110,7 @@
         "titleRequired": "A quest title is required.",
         "descriptionRequired": "A quest description is required.",
         "giverRequired": "A quest giver is required.",
+        "acceptedConflict": "Accepted Actors must be unique and cannot also be givers or observers.",
         "observerConflict": "A giver cannot also be an observer."
       },
       "rewards": {

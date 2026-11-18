@@ -257,6 +257,35 @@
     padding: 0;
   }
 
+  .amras-mad-inventions .amras-quest-form [data-accepted-actors] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .amras-mad-inventions [data-accepted-actor] {
+    display: flex;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .amras-mad-inventions [data-accepted-actor] [data-accepted-name] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .amras-mad-inventions [data-accepted-actor] [data-accepted-name]:not(:last-child) {
+    border-radius: 4px 0 0 4px !important;
+  }
+
+  .amras-mad-inventions [data-accepted-actor] [data-remove-accepted] {
+    flex: 0 0 auto;
+    border-left: 0;
+    border-radius: 0 4px 4px 0 !important;
+  }
+
   .amras-mad-inventions .amras-related-results {
     max-height: 12rem;
     overflow-y: auto;

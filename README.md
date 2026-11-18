@@ -17,6 +17,9 @@ A Foundry VTT v14 module.
 - Drop Actors into the giver or Actor observers section and Items into rewards;
   duplicate item drops increase their quantity. D&D 5e currency has individual
   denomination inputs; other currency entries remain editable.
+- Drop Actors into **Quest accepted by** to track participants. The list locks
+  while the saved quest is completed and unlocks after saving another state.
+  Participants are suggested as XP and currency recipients on completion.
 - On completion, the GM assigns rewards to Actors. XP is awarded in full to
   each selected recipient; items may be divided between recipients; currency
   is divided evenly with remainders converted to lower denominations where

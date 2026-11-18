@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+- Track accepted quest Actors and suggest them for XP and currency rewards.
+- Display accepted Actors as wrapping, joined controls.
+
 ## 0.2.3
 - Open related quests as links and make journal pages readable from the sidebar.
 - Organize faction and quest journals into separate module-owned folders.

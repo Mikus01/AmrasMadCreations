@@ -13,6 +13,11 @@ function observerRow(root, uuid) {
     .find(row => row.dataset.actorObserver === uuid);
 }
 
+function acceptedRow(root, uuid) {
+  return [...root.querySelectorAll("[data-accepted-actor]")]
+    .find(row => row.dataset.acceptedActor === uuid);
+}
+
 export function findRelatedQuests(quests, query, selected = []) {
   const search = query.trim().toLocaleLowerCase();
   if (!search) return [];
@@ -104,7 +109,7 @@ function installRelatedQuestPicker(root) {
 export async function applyQuestDrop(root, kind, data) {
   if (!game.user.isGM) throw new Error("Only a GM can edit quests.");
   const expected = kind === "item" ? "Item" : "Actor";
-  if (!["giver", "observer", "item"].includes(kind) || data?.type !== expected || !data.uuid) {
+  if (!["giver", "observer", "accepted", "item"].includes(kind) || data?.type !== expected || !data.uuid) {
     throw new Error(localize("invalidDrop"));
   }
   const document = await fromUuid(data.uuid);
@@ -112,12 +117,19 @@ export async function applyQuestDrop(root, kind, data) {
     throw new Error(localize("invalidDrop"));
   }
   const uuid = document.uuid;
+  const accepted = kind === "item" ? null : acceptedRow(root, uuid);
+  if ((kind === "accepted" || accepted)
+    && !root.querySelector("[data-quest-drop='accepted']")) {
+    throw new Error(localize("acceptedLocked"));
+  }
   if (kind === "giver") {
+    accepted?.remove();
     observerRow(root, uuid)?.remove();
     root.querySelector("[name='giverActorUuid']").value = uuid;
     root.querySelector("[data-giver-name]").textContent = document.name;
     root.querySelector("[data-clear-giver]").hidden = false;
   } else if (kind === "observer") {
+    accepted?.remove();
     if (root.querySelector("[name='giverActorUuid']").value === uuid) clearGiver(root);
     if (observerRow(root, uuid)) return;
     const row = root.querySelector("[data-actor-observer-template]").content.firstElementChild.cloneNode(true);
@@ -125,6 +137,17 @@ export async function applyQuestDrop(root, kind, data) {
     row.querySelector("[name='observer']").value = `actor|${uuid}`;
     row.querySelector("[data-observer-name]").textContent = document.name;
     root.querySelector("[data-actor-observers]").append(row);
+  } else if (kind === "accepted") {
+    if (root.querySelector("[name='giverActorUuid']").value === uuid) clearGiver(root);
+    observerRow(root, uuid)?.remove();
+    if (accepted) return;
+    const row = root.querySelector("[data-accepted-actor-template]").content.firstElementChild.cloneNode(true);
+    row.dataset.acceptedActor = uuid;
+    row.querySelector("[name='acceptedActorUuids']").value = uuid;
+    const name = row.querySelector("[data-accepted-name]");
+    name.textContent = document.name;
+    name.dataset.uuid = uuid;
+    root.querySelector("[data-accepted-actors]").append(row);
   } else {
     if (!root.querySelector("[data-quest-drop='item']")) throw new Error(localize("rewards.locked"));
     const existing = [...root.querySelectorAll("[data-item-row]")]
@@ -147,6 +170,15 @@ export async function applyQuestDrop(root, kind, data) {
 
 export function installQuestDropHandlers(root) {
   installRelatedQuestPicker(root);
+  root.querySelector("[data-accepted-actors]")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-remove-accepted]");
+    if (!button) return;
+    if (!game.user.isGM || !root.querySelector("[data-quest-drop='accepted']")) {
+      ui.notifications.warn(localize("acceptedLocked"));
+      return;
+    }
+    button.closest("[data-accepted-actor]").remove();
+  });
   const clear = root.querySelector("[data-clear-giver]");
   clear?.addEventListener("click", () => clearGiver(root));
   for (const row of root.querySelectorAll("[data-item-row]")) {
@@ -172,7 +204,8 @@ export function installQuestDropHandlers(root) {
         await applyQuestDrop(root, zone.dataset.questDrop, data);
       } catch (error) {
         console.error(`${MODULE_ID} | Quest drop failed`, error);
-        ui.notifications.warn(localize("invalidDrop"));
+        ui.notifications.warn(error.message === localize("acceptedLocked")
+          ? localize("acceptedLocked") : localize("invalidDrop"));
       }
     });
   }

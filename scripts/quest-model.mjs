@@ -36,6 +36,7 @@ export class QuestModel extends foundry.abstract.TypeDataModel {
         type: new f.StringField({ required: true, choices: { actor: "actor", faction: "faction" } }),
         uuid: new f.StringField({ required: true, blank: false })
       })),
+      acceptedActorUuids: new f.ArrayField(new f.StringField({ required: true, blank: false })),
       relatedQuestIds: new f.ArrayField(new f.StringField({ required: true, blank: false })),
       rewardAudit: new f.ArrayField(new f.SchemaField({
         id: new f.StringField({ initial: "" }),

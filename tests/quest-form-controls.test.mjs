@@ -6,6 +6,7 @@ function fixture() {
   const giverName = { textContent: "" };
   const clear = { hidden: true };
   const actors = [];
+  const accepted = [];
   const items = [];
   const actorRow = () => {
     const row = {
@@ -29,7 +30,17 @@ function fixture() {
       return this.label;
     }
   });
+  const acceptedRow = () => ({
+    dataset: {},
+    input: { value: "" },
+    label: { textContent: "", dataset: {} },
+    querySelector(selector) {
+      return selector === "[name='acceptedActorUuids']" ? this.input : this.label;
+    },
+    remove() { accepted.splice(accepted.indexOf(this), 1); }
+  });
   let locked = false;
+  let acceptedLocked = false;
   const root = {
     querySelector(selector) {
       const entries = {
@@ -37,6 +48,9 @@ function fixture() {
         "[data-giver-name]": giverName,
         "[data-clear-giver]": clear,
         "[data-actor-observers]": { append: row => actors.push(row) },
+        "[data-accepted-actors]": { append: row => accepted.push(row) },
+        "[data-accepted-actor-template]": { content: { firstElementChild: { cloneNode: acceptedRow } } },
+        "[data-quest-drop='accepted']": acceptedLocked ? null : {},
         "[data-item-rows]": { append: row => items.push(row) },
         "[data-actor-observer-template]": { content: { firstElementChild: { cloneNode: actorRow } } },
         "[data-item-row-template]": { content: { firstElementChild: { cloneNode: itemRow } } },
@@ -45,10 +59,13 @@ function fixture() {
       return entries[selector];
     },
     querySelectorAll(selector) {
-      return selector === "[data-actor-observer]" ? actors : items;
+      if (selector === "[data-actor-observer]") return actors;
+      if (selector === "[data-accepted-actor]") return accepted;
+      return items;
     }
   };
-  return { root, giver, actors, items, lock: () => { locked = true; } };
+  return { root, giver, actors, accepted, items, lock: () => { locked = true; },
+    lockAccepted: () => { acceptedLocked = true; } };
 }
 
 beforeEach(() => {
@@ -60,6 +77,48 @@ beforeEach(() => {
 });
 
 describe("quest form drops", () => {
+  it("REQ-048/050 moves Actors between participants and other roles without duplicates", async () => {
+    const { root, giver, actors, accepted } = fixture();
+    const actor = { type: "Actor", uuid: "Actor.a" };
+    await applyQuestDrop(root, "observer", actor);
+    await applyQuestDrop(root, "accepted", actor);
+    await applyQuestDrop(root, "accepted", actor);
+    expect(actors).toHaveLength(0);
+    expect(accepted.map(row => row.input.value)).toEqual(["Actor.a"]);
+    await applyQuestDrop(root, "giver", actor);
+    expect(accepted).toHaveLength(0);
+    expect(giver.value).toBe("Actor.a");
+    await applyQuestDrop(root, "accepted", actor);
+    expect(giver.value).toBe("");
+    expect(accepted.map(row => row.input.value)).toEqual(["Actor.a"]);
+    await applyQuestDrop(root, "observer", actor);
+    expect(accepted).toHaveLength(0);
+    expect(actors.map(row => row.input.value)).toEqual(["actor|Actor.a"]);
+  });
+
+  it("REQ-048/050 rejects invalid participant drops and non-GM changes", async () => {
+    const { root, accepted } = fixture();
+    await expect(applyQuestDrop(root, "accepted", { type: "Item", uuid: "Item.a" })).rejects.toThrow();
+    fromUuid.mockResolvedValueOnce(null);
+    await expect(applyQuestDrop(root, "accepted", { type: "Actor", uuid: "Actor.missing" })).rejects.toThrow();
+    game.user.isGM = false;
+    await expect(applyQuestDrop(root, "accepted", { type: "Actor", uuid: "Actor.a" })).rejects.toThrow();
+    expect(accepted).toHaveLength(0);
+  });
+
+  it("REQ-049/050 rejects moves that would alter the locked participant list", async () => {
+    const { root, giver, actors, accepted, lockAccepted } = fixture();
+    const actor = { type: "Actor", uuid: "Actor.a" };
+    await applyQuestDrop(root, "accepted", actor);
+    lockAccepted();
+    await expect(applyQuestDrop(root, "giver", actor)).rejects.toThrow();
+    await expect(applyQuestDrop(root, "observer", actor)).rejects.toThrow();
+    await expect(applyQuestDrop(root, "accepted", { type: "Actor", uuid: "Actor.b" })).rejects.toThrow();
+    expect(accepted.map(row => row.input.value)).toEqual(["Actor.a"]);
+    expect(giver.value).toBe("");
+    expect(actors).toHaveLength(0);
+  });
+
   it("replaces or clears a giver when moving Actors between giver and observers", async () => {
     const { root, giver, actors } = fixture();
     const a = { type: "Actor", uuid: "Actor.a" };

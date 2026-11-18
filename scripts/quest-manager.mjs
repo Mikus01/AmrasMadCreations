@@ -41,6 +41,7 @@ function questSystem(q) {
     rewards: q.rewards,
     consequence: q.consequence ?? "",
     observers: q.observers,
+    acceptedActorUuids: q.acceptedActorUuids,
     relatedQuestIds: q.relatedQuestIds,
     rewardAudit: q.rewardAudit ?? [],
     rewardsGranted: q.rewardsGranted ?? false,
@@ -316,8 +317,11 @@ export class QuestManager extends HandlebarsApplicationMixin(ApplicationV2) {
       const page = this.questPage;
       const q = questFromForm(this.element, { page, defaults: this.newQuestDefaults });
       if (page) {
-        if (await saveQuestPage(page, q)) {
+        let cancelled = false;
+        if (await saveQuestPage(page, q, { onCompletionCancelled: () => { cancelled = true; } })) {
           this.creating = false;
+          await this.render();
+        } else if (cancelled) {
           await this.render();
         }
         return;

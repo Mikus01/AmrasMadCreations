@@ -81,6 +81,33 @@
     {{/if}}
   </fieldset>
 
+  <fieldset>
+    <legend>{{localize "amras-mad-inventions.quest.acceptedBy"}}</legend>
+    <ul class="amras-quest-observers" data-accepted-actors>
+      {{#each quest.acceptedActors}}
+      <li data-accepted-actor="{{uuid}}">
+        {{#if ../editable}}<input type="hidden" name="acceptedActorUuids" value="{{uuid}}">{{/if}}
+        <button type="button" data-action="openDocument" data-uuid="{{uuid}}" data-accepted-name>{{name}}</button>
+        {{#if ../acceptedEditable}}
+        <button type="button" data-remove-accepted aria-label="{{localize 'amras-mad-inventions.quest.removeAccepted'}}"><i class="fa-solid fa-xmark"></i></button>
+        {{/if}}
+      </li>
+      {{/each}}
+    </ul>
+    {{#if acceptedEditable}}
+    <div class="amras-dropzone amras-quest-drop" data-quest-drop="accepted">{{localize "amras-mad-inventions.quest.dropActor"}}</div>
+    <template data-accepted-actor-template>
+      <li data-accepted-actor>
+        <input type="hidden" name="acceptedActorUuids">
+        <button type="button" data-action="openDocument" data-accepted-name></button>
+        <button type="button" data-remove-accepted aria-label="{{localize 'amras-mad-inventions.quest.removeAccepted'}}"><i class="fa-solid fa-xmark"></i></button>
+      </li>
+    </template>
+    {{else}}
+      {{#if editable}}<p class="amras-quest-locked">{{localize "amras-mad-inventions.quest.acceptedLocked"}}</p>{{/if}}
+    {{/if}}
+  </fieldset>
+
   <fieldset class="amras-quest-rewards">
     <legend>{{localize "amras-mad-inventions.quest.rewards.title"}}</legend>
     {{#if quest.rewardsLocked}}
